@@ -10,15 +10,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install -j"$(nproc)" pdo_sqlite gd mbstring zip exif intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Ровно один MPM: убираем ВСЕ включённые mpm-модули и включаем только prefork
-# (mod_php требует prefork; иначе "More than one MPM loaded").
+# Ровно один MPM (mod_php требует prefork; иначе "More than one MPM loaded").
+# Отключаем event/worker и через a2dismod, и удалением символлинков; включаем prefork.
+# В конце печатаем диагностику: что реально подключено и нет ли прямого LoadModule mpm.
 # ЧПУ-ссылки + чтение .htaccess.
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; \
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; \
+    rm -f /etc/apache2/mods-enabled/mpm_*; \
     a2enmod mpm_prefork rewrite headers \
     && printf '<Directory /var/www/html/>\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
         > /etc/apache2/conf-available/wp-override.conf \
     && a2enconf wp-override \
-    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf
+    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf \
+    && echo '=== MPM_DIAG mods-enabled ===' && (ls /etc/apache2/mods-enabled/ | grep -i mpm || echo none) \
+    && echo '=== MPM_DIAG direct LoadModule ===' && (grep -rniE 'loadmodule[[:space:]]+mpm' /etc/apache2/ || echo none) \
+    && echo '=== MPM_DIAG end ==='
 
 # Параметры PHP под магазин/загрузки.
 RUN { \
