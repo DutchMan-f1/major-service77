@@ -1,0 +1,11 @@
+/*
+Theme Name:   MAJOR Service77
+Theme URI:    https://major.ru/
+Description:  Тема авто-магазина запчастей (WooCommerce + Auto Fitment). Запчасти для авто из Китая. Самостоятельная классическая тема.
+Author:       Arising
+Version:      0.2.0
+Text Domain:  autoparts
+Requires PHP: 7.4
+*/
+
+/* Основные стили вынесены в assets/css/theme.css (подключается через functions.php). */

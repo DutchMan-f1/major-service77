@@ -1,0 +1,8 @@
+# Что НЕ загружать в Railway при `railway up`.
+# Тяжёлые фото товаров (~515 МБ) исключаем — из-за них загрузка рвалась.
+wordpress/wp-content/uploads
+wordpress/wp-content/upgrade
+wordpress/wp-content/cache
+.claude
+*.md
+.git

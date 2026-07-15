@@ -1,0 +1,13 @@
+.claude
+.git
+*.md
+**/.DS_Store
+**/Thumbs.db
+wordpress/router.php
+
+# Тяжёлые фото товаров (~515 МБ) — исключаем, чтобы загрузка на Railway
+# была лёгкой и надёжной. Сайт полностью рабочий, кроме картинок товаров;
+# фото добавим отдельно, когда сайт уже поднимется.
+wordpress/wp-content/uploads
+wordpress/wp-content/upgrade
+wordpress/wp-content/cache

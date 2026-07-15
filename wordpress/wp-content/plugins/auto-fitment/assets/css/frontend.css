@@ -1,0 +1,100 @@
+/* ================= Каскадный подбор по авто ================= */
+.af-selector{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.af-selector select{min-width:160px;padding:8px 10px}
+.af-selector select:disabled{opacity:.55}
+
+/* ================= Модалка авторизации ================= */
+.af-modal-overlay{
+	position:fixed;inset:0;background:rgba(18,26,20,.5);
+	display:flex;align-items:center;justify-content:center;
+	z-index:100000;padding:24px;overflow-y:auto;
+}
+.af-modal-overlay[hidden]{display:none}
+
+.af-modal{
+	position:relative;background:#fff;width:100%;max-width:460px;
+	border-radius:24px;padding:34px 34px 30px;
+	box-shadow:0 30px 80px rgba(0,0,0,.28);
+	max-height:92vh;overflow-y:auto;
+	font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+.af-modal.is-register{max-width:660px}
+
+.af-modal-close{
+	position:absolute;top:18px;right:18px;width:34px;height:34px;
+	border:0;background:none;color:#9A9DA5;cursor:pointer;border-radius:50%;
+	display:grid;place-items:center;transition:.15s;
+}
+.af-modal-close:hover{background:#F1F1F4;color:#16181D}
+
+.af-screen[hidden]{display:none}
+
+.af-modal-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.af-modal-head--reg{justify-content:space-between;flex-wrap:wrap;gap:12px}
+.af-head-l{display:flex;align-items:center;gap:12px}
+.af-head-ic{display:inline-flex;color:#46B04A}
+.af-modal-title{
+	margin:0;font-family:'Montserrat',sans-serif;font-weight:800;
+	font-size:22px;text-transform:uppercase;letter-spacing:.4px;color:#16181D;
+}
+
+/* Переключатель Физлицо / Юрлицо */
+.af-type{display:inline-flex;background:#ECECEF;border-radius:999px;padding:3px}
+.af-type__btn{
+	border:0;background:transparent;padding:8px 16px;border-radius:999px;
+	font:inherit;font-weight:600;font-size:13px;color:#5A5E66;cursor:pointer;transition:.15s;
+}
+.af-type__btn.is-active{background:#46B04A;color:#fff}
+
+/* Формы и поля */
+.af-form{display:flex;flex-direction:column;gap:12px}
+.af-input{
+	width:100%;background:#F1F1F4;border:1px solid transparent;border-radius:14px;
+	padding:15px 18px;font:inherit;font-size:15px;color:#16181D;outline:none;transition:.15s;
+}
+.af-input::placeholder{color:#9A9DA5}
+.af-input:focus{background:#fff;border-color:#CBD0D6}
+
+.af-section-title{margin:18px 0 12px;font-size:16px;font-weight:700;color:#16181D}
+.af-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.af-grid .full{grid-column:1 / -1}
+
+/* Кнопки */
+.af-btn-row{display:flex;gap:12px;margin-top:2px}
+.af-btn{
+	flex:1;height:52px;border:0;border-radius:14px;font:inherit;font-weight:700;
+	font-size:15px;cursor:pointer;transition:.15s;
+}
+.af-btn--primary{background:#46B04A;color:#fff}
+.af-btn--primary:hover{background:#3A9A2C}
+.af-btn--ghost{background:#fff;border:1px solid #E2E3E7;color:#16181D}
+.af-btn--ghost:hover{background:#F5F5F7}
+.af-btn--wide{flex:0 0 auto;padding:0 32px}
+.af-btn:disabled{opacity:.6;cursor:default}
+
+.af-link{
+	background:none;border:0;color:#8A8F97;text-align:center;cursor:pointer;
+	font:inherit;font-size:14px;padding:8px;margin-top:2px;
+}
+.af-link:hover{color:#16181D}
+
+/* Согласие */
+.af-agree{display:flex;gap:11px;align-items:flex-start;font-size:12px;color:#8A8F97;margin:18px 0;line-height:1.45}
+.af-agree input{margin-top:1px;width:18px;height:18px;flex-shrink:0;accent-color:#46B04A}
+.af-agree a{color:#46B04A;text-decoration:underline}
+
+.af-submit-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.af-alt{font-size:14px;color:#8A8F97}
+.af-alt a{color:#46B04A;font-weight:600}
+
+/* Сообщения */
+.af-msg{padding:11px 15px;border-radius:12px;font-size:13px;background:#eef;line-height:1.4}
+.af-msg.is-error{background:#FDECEA;color:#B3261E}
+.af-msg.is-ok{background:#E8F6E9;color:#1F7A2E}
+
+/* Мобильные */
+@media (max-width:560px){
+	.af-modal{padding:26px 20px 22px;border-radius:20px}
+	.af-grid{grid-template-columns:1fr}
+	.af-modal-head--reg{flex-direction:column;align-items:flex-start}
+}

@@ -1,0 +1,7 @@
+# Тяжёлые фото товаров (~515 МБ) и служебное — в репозиторий не берём.
+# База SQLite (.ht.sqlite) НЕ игнорируется — она нужна, в ней все данные.
+wordpress/wp-content/uploads/
+wordpress/wp-content/upgrade/
+wordpress/wp-content/cache/
+.claude/
+*.log
