@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install -j"$(nproc)" pdo_sqlite gd mbstring zip exif intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Ровно один MPM: mod_php требует prefork (иначе "More than one MPM loaded").
+# Ровно один MPM: убираем ВСЕ включённые mpm-модули и включаем только prefork
+# (mod_php требует prefork; иначе "More than one MPM loaded").
 # ЧПУ-ссылки + чтение .htaccess.
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; \
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; \
     a2enmod mpm_prefork rewrite headers \
     && printf '<Directory /var/www/html/>\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
         > /etc/apache2/conf-available/wp-override.conf \
