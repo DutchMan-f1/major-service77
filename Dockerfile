@@ -11,19 +11,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Ровно один MPM (mod_php требует prefork; иначе "More than one MPM loaded").
-# Отключаем event/worker и через a2dismod, и удалением символлинков; включаем prefork.
-# В конце печатаем диагностику: что реально подключено и нет ли прямого LoadModule mpm.
+# Убираем event/worker-символлинки И любые прямые LoadModule mpm_* из главного
+# конфига и conf-enabled, затем включаем ТОЛЬКО prefork через mods-enabled.
 # ЧПУ-ссылки + чтение .htaccess.
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; \
-    rm -f /etc/apache2/mods-enabled/mpm_*; \
-    a2enmod mpm_prefork rewrite headers \
+RUN rm -f /etc/apache2/mods-enabled/mpm_* \
+    && sed -ri '/LoadModule[[:space:]]+mpm_[a-z]+_module/Id' /etc/apache2/apache2.conf \
+    && ( find /etc/apache2/conf-enabled -type f -exec sed -ri '/LoadModule[[:space:]]+mpm_[a-z]+_module/Id' {} + 2>/dev/null || true ) \
+    && a2enmod mpm_prefork rewrite headers \
     && printf '<Directory /var/www/html/>\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
         > /etc/apache2/conf-available/wp-override.conf \
     && a2enconf wp-override \
-    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf \
-    && echo '=== MPM_DIAG mods-enabled ===' && (ls /etc/apache2/mods-enabled/ | grep -i mpm || echo none) \
-    && echo '=== MPM_DIAG direct LoadModule ===' && (grep -rniE 'loadmodule[[:space:]]+mpm' /etc/apache2/ || echo none) \
-    && echo '=== MPM_DIAG end ==='
+    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf
+
+# Диагностика: Railway показывает ПОСЛЕДНЮЮ строку шага, поэтому по одной строке на шаг.
+RUN echo "MPM_ENABLED=[$(ls /etc/apache2/mods-enabled/ 2>/dev/null | grep -i mpm | tr '\n' ',')]"
+RUN echo "MPM_DIRECT=[$(grep -rilE 'loadmodule[[:space:]]+mpm' /etc/apache2/ 2>/dev/null | tr '\n' ',')]"
+RUN echo "CONFIGTEST=[$(apache2ctl -t 2>&1 | tr '\n' ' ')]"
 
 # Параметры PHP под магазин/загрузки.
 RUN { \
