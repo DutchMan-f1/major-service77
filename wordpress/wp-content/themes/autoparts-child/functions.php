@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'MJR_VER' ) ) {
-	define( 'MJR_VER', '0.6.7' );
+	define( 'MJR_VER', '0.6.8' );
 }
 
 /**
@@ -512,10 +512,11 @@ add_filter( 'posts_search', function ( $search, $q ) {
 	}
 	global $wpdb;
 	$like = '%' . $wpdb->esc_like( $term ) . '%';
+	// Артикул и партномер — точное совпадение (иначе короткий номер ловит лишние товары как подстроку).
 	$ids  = $wpdb->get_col( $wpdb->prepare(
 		"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
-		 WHERE meta_key IN ('_sku','_af_oem','_af_cross') AND meta_value LIKE %s",
-		$like
+		 WHERE meta_key IN ('_sku','_af_oem') AND meta_value = %s",
+		$term
 	) );
 	$clause = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", $like );
 	if ( $ids ) {

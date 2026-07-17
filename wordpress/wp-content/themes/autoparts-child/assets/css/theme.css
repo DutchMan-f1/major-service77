@@ -80,6 +80,9 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .mjr-search{display:flex;align-items:center;background:var(--field);border-radius:999px;padding:6px;gap:4px}
 .mjr-search__input{flex:1;min-width:0;border:0;background:transparent;font:inherit;padding:8px 16px;color:var(--ink);outline:none}
 .mjr-search__input::placeholder{color:#9498A0}
+/* Поиск при фокусе: без зелёной обводки, поле просто чуть светлеет */
+.mjr-search__input:focus,.mjr-search__input:focus-visible{outline:none;box-shadow:none}
+.mjr-search:focus-within{background:#F7F7F9}
 
 /* Сегментированный переключатель (единый трек, а не отдельные кнопки) */
 .seg{display:inline-flex;align-items:center;background:#E4E4EA;border-radius:999px;padding:3px;gap:0;flex-shrink:0}
@@ -314,7 +317,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .cart-remove:hover{background:#FDECEA}
 .cart-update-hidden{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;overflow:hidden}
 .cart-footer{display:flex;align-items:center;gap:30px;margin-top:34px;flex-wrap:wrap}
-.btn-checkout{display:inline-flex;align-items:center;gap:10px;background:var(--red);color:#fff;border-radius:14px;padding:16px 30px;font-weight:700;font-size:16px;white-space:nowrap}
+.btn-checkout{display:inline-flex;align-items:center;gap:10px;background:var(--red);color:#fff;border:0;border-radius:14px;padding:16px 30px;font-weight:700;font-size:16px;white-space:nowrap;cursor:pointer;font-family:inherit}
+.btn-checkout:focus,.btn-checkout:focus-visible{outline:none}
 .btn-checkout:hover{background:var(--red-700)}
 .cart-delivery{color:#8A8F97;font-size:14px;line-height:1.45;margin-left:auto;text-align:right}
 .cart-total{text-align:right}
