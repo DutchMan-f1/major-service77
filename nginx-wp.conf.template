@@ -1,5 +1,6 @@
 server {
     listen ${PORT} default_server;
+    listen [::]:${PORT} default_server;
     server_name _;
     root /var/www/html;
     index index.php index.html;
