@@ -153,8 +153,22 @@ class AF_Frontend {
 
 	/* ---------------- AJAX: авторизация ---------------- */
 
+	/**
+	 * Лимит попыток по IP: защита от перебора пароля и массовых регистраций.
+	 */
+	protected static function throttle( $bucket, $max = 15 ) {
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '';
+		$key = 'af_rl_' . $bucket . '_' . md5( $ip );
+		$n   = (int) get_transient( $key );
+		if ( $n >= $max ) {
+			wp_send_json_error( array( 'message' => 'Слишком много попыток. Попробуйте позже.' ) );
+		}
+		set_transient( $key, $n + 1, HOUR_IN_SECONDS );
+	}
+
 	public static function ajax_login() {
 		check_ajax_referer( 'af_front', 'nonce' );
+		self::throttle( 'login', 15 );
 
 		$creds = array(
 			'user_login'    => sanitize_text_field( wp_unslash( $_POST['login'] ?? '' ) ),
@@ -176,6 +190,7 @@ class AF_Frontend {
 
 	public static function ajax_register() {
 		check_ajax_referer( 'af_front', 'nonce' );
+		self::throttle( 'register', 10 );
 
 		$p    = wp_unslash( $_POST );
 		$type = ( isset( $p['account_type'] ) && 'ur' === $p['account_type'] ) ? 'ur' : 'fiz';

@@ -73,17 +73,26 @@ $table_prefix = 'wp_';
 
 /* Add any custom values between this line and the "stop editing" line. */
 
-/* --- Портативный адрес сайта: работает на любом домене (localhost, туннель, хостинг) без правки БД. --- */
-if ( ! empty( $_SERVER['HTTP_HOST'] ) ) {
-	$mjr_https = ( ! empty( $_SERVER['HTTPS'] ) && 'off' !== $_SERVER['HTTPS'] )
-		|| ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === $_SERVER['HTTP_X_FORWARDED_PROTO'] );
-	if ( $mjr_https ) {
-		$_SERVER['HTTPS'] = 'on'; // корректный HTTPS за прокси/CDN хостинга
-	}
-	$mjr_scheme = $mjr_https ? 'https' : 'http';
-	define( 'WP_HOME', $mjr_scheme . '://' . $_SERVER['HTTP_HOST'] );
-	define( 'WP_SITEURL', $mjr_scheme . '://' . $_SERVER['HTTP_HOST'] );
+/* --- Адрес сайта: ТОЛЬКО из доверенного списка хостов (защита от подмены Host-заголовка:
+   иначе можно отравить ссылки сброса пароля). Новый домен — добавляй в $mjr_allowed_hosts. --- */
+$mjr_allowed_hosts = array(
+	'major-service77-production-ab5b.up.railway.app',
+	'localhost',
+	'localhost:8080',
+	'127.0.0.1',
+	'127.0.0.1:8080',
+);
+$mjr_host = ( ! empty( $_SERVER['HTTP_HOST'] ) && in_array( $_SERVER['HTTP_HOST'], $mjr_allowed_hosts, true ) )
+	? $_SERVER['HTTP_HOST']
+	: $mjr_allowed_hosts[0];
+$mjr_https = ( ! empty( $_SERVER['HTTPS'] ) && 'off' !== $_SERVER['HTTPS'] )
+	|| ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === $_SERVER['HTTP_X_FORWARDED_PROTO'] );
+if ( $mjr_https ) {
+	$_SERVER['HTTPS'] = 'on'; // корректный HTTPS за прокси/CDN хостинга
 }
+$mjr_scheme = $mjr_https ? 'https' : 'http';
+define( 'WP_HOME', $mjr_scheme . '://' . $mjr_host );
+define( 'WP_SITEURL', $mjr_scheme . '://' . $mjr_host );
 
 /**
  * For developers: WordPress debugging mode.

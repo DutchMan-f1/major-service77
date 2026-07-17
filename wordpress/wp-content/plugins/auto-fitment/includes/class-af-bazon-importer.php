@@ -547,7 +547,8 @@ class AF_Bazon_Importer {
 
 		$attachment_ids = array();
 		foreach ( $urls as $url ) {
-			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			if ( ! filter_var( $url, FILTER_VALIDATE_URL )
+				|| ! in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true ) ) {
 				continue;
 			}
 			$existing = $this->find_attachment_by_source( $url );

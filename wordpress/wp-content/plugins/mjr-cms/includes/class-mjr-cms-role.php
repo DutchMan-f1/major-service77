@@ -15,7 +15,26 @@ class MJR_CMS_Role {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'lock_menu' ), 999 );
 		add_action( 'admin_init', array( __CLASS__, 'guard' ) );
+		add_action( 'admin_init', array( __CLASS__, 'guard_ajax_terms' ) );
 		add_action( 'wp_before_admin_bar_render', array( __CLASS__, 'trim_admin_bar' ) );
+	}
+
+	/**
+	 * Контент-менеджер имеет manage_categories (нужно для терминов моделей авто),
+	 * из-за чего через admin-ajax он мог бы править категории/метки блога.
+	 * Разрешаем AJAX-действия с терминами ТОЛЬКО для таксономии car_model.
+	 */
+	public static function guard_ajax_terms() {
+		if ( ! self::is_content_manager() || ! wp_doing_ajax() ) {
+			return;
+		}
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( $_REQUEST['action'] ) : '';
+		if ( in_array( $action, array( 'add-tag', 'delete-tag', 'inline-save-tax', 'get-tagcloud' ), true ) ) {
+			$tax = isset( $_REQUEST['taxonomy'] ) ? sanitize_key( $_REQUEST['taxonomy'] ) : '';
+			if ( 'car_model' !== $tax ) {
+				wp_die( -1, 403 );
+			}
+		}
 	}
 
 	/**
