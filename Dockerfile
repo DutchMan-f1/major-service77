@@ -1,32 +1,15 @@
-# WordPress (SQLite) под Railway: PHP 8.3 + Apache.
-FROM php:8.3-apache
+# WordPress (SQLite) на nginx + PHP-FPM 8.3 — без Apache, значит без MPM-ошибки.
+FROM php:8.3-fpm
 
-# Системные библиотеки для PHP-расширений.
+# nginx, envsubst (gettext-base) и системные библиотеки для PHP-расширений.
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        nginx gettext-base \
         libsqlite3-dev \
         libpng-dev libjpeg-dev libfreetype6-dev \
         libzip-dev libonig-dev libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_sqlite gd mbstring zip exif intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Ровно один MPM (mod_php требует prefork; иначе "More than one MPM loaded").
-# Убираем event/worker-символлинки И любые прямые LoadModule mpm_* из главного
-# конфига и conf-enabled, затем включаем ТОЛЬКО prefork через mods-enabled.
-# ЧПУ-ссылки + чтение .htaccess.
-RUN rm -f /etc/apache2/mods-enabled/mpm_* \
-    && sed -ri '/LoadModule[[:space:]]+mpm_[a-z]+_module/Id' /etc/apache2/apache2.conf \
-    && ( find /etc/apache2/conf-enabled -type f -exec sed -ri '/LoadModule[[:space:]]+mpm_[a-z]+_module/Id' {} + 2>/dev/null || true ) \
-    && a2enmod mpm_prefork rewrite headers \
-    && printf '<Directory /var/www/html/>\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' \
-        > /etc/apache2/conf-available/wp-override.conf \
-    && a2enconf wp-override \
-    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf
-
-# Диагностика: Railway показывает ПОСЛЕДНЮЮ строку шага, поэтому по одной строке на шаг.
-RUN echo "MPM_ENABLED=[$(ls /etc/apache2/mods-enabled/ 2>/dev/null | grep -i mpm | tr '\n' ',')]"
-RUN echo "MPM_DIRECT=[$(grep -rilE 'loadmodule[[:space:]]+mpm' /etc/apache2/ 2>/dev/null | tr '\n' ',')]"
-RUN echo "CONFIGTEST=[$(apache2ctl -t 2>&1 | tr '\n' ' ')]"
 
 # Параметры PHP под магазин/загрузки.
 RUN { \
@@ -36,9 +19,13 @@ RUN { \
         echo 'max_execution_time=120'; \
     } > /usr/local/etc/php/conf.d/wp.ini
 
-# Файлы сайта (папка wordpress/ проекта → корень веб-сервера).
+# Шаблон конфига nginx (порт подставится из $PORT при старте).
+COPY nginx-wp.conf.template /etc/nginx/wp.conf.template
+
+# Файлы сайта.
 COPY wordpress/ /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 
-# Railway передаёт порт в $PORT — подставляем его в конфиг Apache при старте.
-CMD ["sh", "-c", "sed -ri \"s/^Listen 80$/Listen ${PORT:-80}/\" /etc/apache2/ports.conf && sed -ri \"s/:80>/:${PORT:-80}>/\" /etc/apache2/sites-available/000-default.conf && exec apache2-foreground"]
+# Railway передаёт порт в $PORT. Подставляем его в конфиг nginx,
+# запускаем PHP-FPM в фоне и nginx на переднем плане.
+CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/wp.conf.template > /etc/nginx/sites-enabled/default && php-fpm -D && nginx -g 'daemon off;'"]
