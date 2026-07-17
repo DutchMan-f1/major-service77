@@ -6,6 +6,16 @@
 $uri  = urldecode( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) );
 $file = __DIR__ . $uri;
 
+// Безопасность для публичного доступа (php -S не применяет .htaccess):
+// закрываем базу SQLite, .ht* и служебные файлы от прямого скачивания.
+if ( preg_match( '#^/wp-content/database(/|$)#i', $uri )
+	|| preg_match( '#\.(sqlite|sqlite3|sql|log)$#i', $uri )
+	|| preg_match( '#(^|/)\.(ht|git)#i', $uri )
+	|| preg_match( '#^/wp-config\.php$#i', $uri ) ) {
+	http_response_code( 403 );
+	exit( 'Forbidden' );
+}
+
 // Реальный статический файл (css/js/img и т.п.) — отдать как есть.
 if ( $uri !== '/' && file_exists( $file ) && ! is_dir( $file ) ) {
 	return false;

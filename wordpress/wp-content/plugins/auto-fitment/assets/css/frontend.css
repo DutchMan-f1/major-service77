@@ -30,7 +30,7 @@
 .af-screen[hidden]{display:none}
 
 .af-modal-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.af-modal-head--reg{justify-content:space-between;flex-wrap:wrap;gap:12px}
+.af-modal-head--reg{justify-content:space-between;flex-wrap:wrap;gap:12px;padding-right:44px}
 .af-head-l{display:flex;align-items:center;gap:12px}
 .af-head-ic{display:inline-flex;color:#46B04A}
 .af-modal-title{

@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'MJR_VER' ) ) {
-	define( 'MJR_VER', '0.6.6' );
+	define( 'MJR_VER', '0.6.7' );
 }
 
 /**
@@ -91,6 +91,33 @@ add_filter( 'woocommerce_add_to_cart_fragments', function ( $fragments ) {
 /* ---------------- Оформление заказа ---------------- */
 
 add_filter( 'woocommerce_order_button_text', function () { return 'Перейти к оплате'; } );
+
+/**
+ * Фото товаров baz-on — отдаём напрямую с их CDN (метаполе _af_source_url),
+ * а не из локальных uploads. Так фото работают на хостинге/Railway без заливки
+ * гигабайтов картинок. Затрагивает только импортированные вложения.
+ */
+add_filter( 'wp_get_attachment_image_attributes', function ( $attr, $attachment ) {
+	$src = $attachment ? get_post_meta( $attachment->ID, '_af_source_url', true ) : '';
+	if ( $src ) {
+		$attr['src'] = $src;
+		unset( $attr['srcset'], $attr['sizes'] );
+	}
+	return $attr;
+}, 20, 2 );
+
+add_filter( 'wp_get_attachment_image_src', function ( $image, $attachment_id ) {
+	$src = get_post_meta( $attachment_id, '_af_source_url', true );
+	if ( $src && is_array( $image ) ) {
+		$image[0] = $src;
+	}
+	return $image;
+}, 20, 2 );
+
+add_filter( 'wp_get_attachment_url', function ( $url, $attachment_id ) {
+	$src = get_post_meta( $attachment_id, '_af_source_url', true );
+	return $src ? $src : $url;
+}, 20, 2 );
 
 // Гость не оформляет заказ напрямую: со страницы оформления возвращаем в корзину,
 // где кнопка «Оформить заказ» открывает регистрацию (после неё — снова корзина).
@@ -468,6 +495,36 @@ add_action( 'pre_get_posts', function ( $q ) {
 } );
 
 /**
+ * Поиск товаров не только по названию, но и по артикулу (_sku),
+ * партномеру (_af_oem) и кросс-номерам (_af_cross). Работает и для режима
+ * «По артикулу», и для «По VIN» (если введён номер детали).
+ */
+add_filter( 'posts_search', function ( $search, $q ) {
+	if ( is_admin() || ! $q->is_main_query() || ! $q->is_search() ) {
+		return $search;
+	}
+	if ( 'product' !== $q->get( 'post_type' ) ) {
+		return $search;
+	}
+	$term = trim( (string) $q->get( 's' ) );
+	if ( '' === $term ) {
+		return $search;
+	}
+	global $wpdb;
+	$like = '%' . $wpdb->esc_like( $term ) . '%';
+	$ids  = $wpdb->get_col( $wpdb->prepare(
+		"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+		 WHERE meta_key IN ('_sku','_af_oem','_af_cross') AND meta_value LIKE %s",
+		$like
+	) );
+	$clause = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", $like );
+	if ( $ids ) {
+		$clause .= ' OR ' . $wpdb->posts . '.ID IN (' . implode( ',', array_map( 'intval', $ids ) ) . ')';
+	}
+	return " AND ( {$clause} ) ";
+}, 10, 2 );
+
+/**
  * Список брендов, встречающихся у товаров (для фильтра).
  */
 function mjr_product_brands() {
@@ -719,7 +776,7 @@ function mjr_icon( $name, $size = 20 ) {
 		'search'   => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
 		'mail'     => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
 		'telegram' => '<path d="M22 3 2 10.5l6 2.2M22 3l-3 17-8.5-6.3M22 3 8 12.7M8 12.7V19l3.5-4.7"/>',
-		'phone'    => '<path d="M22 16.9v2.6a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h2.6a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L7.6 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/>',
+		'phone'    => '<path d="M6.62 10.79a15.5 15.5 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.4 11.4 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z" fill="currentColor" stroke="none"/>',
 		'bag'        => '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
 		'user'       => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
 		'arrow-left' => '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
