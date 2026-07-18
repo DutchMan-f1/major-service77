@@ -3,7 +3,7 @@ FROM php:8.3-fpm
 
 # nginx, envsubst (gettext-base) и системные библиотеки для PHP-расширений.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        nginx gettext-base \
+        nginx gettext-base curl \
         libsqlite3-dev \
         libpng-dev libjpeg-dev libfreetype6-dev \
         libzip-dev libonig-dev libicu-dev \
@@ -17,6 +17,8 @@ RUN { \
         echo 'post_max_size=64M'; \
         echo 'memory_limit=256M'; \
         echo 'max_execution_time=120'; \
+        echo 'display_errors=Off'; \
+        echo 'log_errors=On'; \
     } > /usr/local/etc/php/conf.d/wp.ini
 
 # Шаблон конфига nginx (порт подставится из $PORT при старте).
@@ -28,4 +30,5 @@ RUN chown -R www-data:www-data /var/www/html
 
 # Railway передаёт порт в $PORT. Подставляем его в конфиг nginx,
 # запускаем PHP-FPM в фоне и nginx на переднем плане.
-CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/wp.conf.template > /etc/nginx/sites-enabled/default && php-fpm -D && nginx -g 'daemon off;'"]
+# nginx-конфиг с портом, PHP-FPM в фоне, «крон» синхронизации baz-on каждые 10 мин, nginx на переднем плане.
+CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/wp.conf.template > /etc/nginx/sites-enabled/default && php-fpm -D && ( while true; do sleep 600; curl -fsS -m 300 \"http://127.0.0.1:${PORT}/?mjr_cron=1\" >/dev/null 2>&1 || true; done & ) && nginx -g 'daemon off;'"]

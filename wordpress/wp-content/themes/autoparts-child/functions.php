@@ -141,6 +141,22 @@ add_action( 'init', function () {
 	add_rewrite_endpoint( 'active-orders', EP_ROOT | EP_PAGES );
 	add_rewrite_endpoint( 'history', EP_ROOT | EP_PAGES );
 } );
+
+// Триггер синхронизации baz-on для «крона» контейнера. Доступен ТОЛЬКО с localhost
+// (контейнер сам себя дёргает), снаружи не сработает.
+add_action( 'init', function () {
+	if ( empty( $_GET['mjr_cron'] ) ) {
+		return;
+	}
+	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '';
+	if ( ! in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+		return;
+	}
+	if ( defined( 'AF_CRON_HOOK' ) ) {
+		do_action( AF_CRON_HOOK ); // AF_Cron::run() -> baz-on run_sync()
+	}
+	exit( 'sync ok' );
+}, 5 );
 add_filter( 'query_vars', function ( $vars ) {
 	$vars[] = 'active-orders';
 	$vars[] = 'history';
