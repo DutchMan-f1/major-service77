@@ -136,12 +136,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .footer-col--links a:hover{color:var(--ink)}
 
 /* ---------- Woo / прочие страницы ---------- */
-.woo-container{padding:32px 0 56px}
-.page-body{padding:32px 0 56px}
+.woo-container{padding-top:32px;padding-bottom:56px}
+.page-body{padding-top:32px;padding-bottom:56px}
 .page-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:28px;margin:0 0 22px}
 
 /* ---------- Каталог: страница марки (модели) ---------- */
-.catalog{padding:24px 0 56px}
+.catalog{padding-top:24px;padding-bottom:56px}
 .breadcrumbs{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px}
 .breadcrumbs a{color:var(--muted)}
 .breadcrumbs a:hover{color:var(--ink)}
@@ -241,7 +241,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .shop-main a.page-numbers:hover{background:#F5F5F7}
 
 /* ---------- Страница товара ---------- */
-.product-page{padding:24px 0 56px}
+.product-page{padding-top:24px;padding-bottom:56px}
 .product-topbar{display:flex;align-items:center;gap:22px;margin-bottom:26px}
 .product-topbar .back-btn{position:static;transform:none;flex-shrink:0}
 .breadcrumbs--inline{text-align:left;margin:0;flex:1}
@@ -294,7 +294,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .tab-text p{margin:0 0 10px}
 
 /* ---------- Корзина ---------- */
-.wc-page{padding:24px 0 56px}
+.wc-page{padding-top:24px;padding-bottom:56px}
 .cart-title,.checkout-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);text-transform:uppercase;margin:0 0 28px;line-height:1.05}
 .cart-table-wrap{overflow-x:auto}
 .cart-table{width:100%;border-collapse:collapse;min-width:820px}
@@ -526,6 +526,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
 	/* Герой */
 	.hero{padding:40px 0 48px}
+	/* Заголовок: ровные межстрочные отступы при переносе (КИТАЯ не «проваливается») */
+	.hero__title{line-height:1.15;gap:2px 12px}
 	.mjr-search--hero{flex-wrap:wrap;border-radius:20px}
 	.mjr-search--hero .mjr-search__input{flex:1 1 100%;order:1}
 	.mjr-search--hero .seg{order:2}
@@ -582,6 +584,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 	.prod-card__actions{gap:6px}
 	.prod-analog{font-size:12px}
 
+	/* Модели авто: 2 колонки, карточки тянутся по ширине */
+	.models-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;justify-content:stretch}
+	.model-card{width:100%;height:auto;min-height:170px}
+
 	/* Личный кабинет */
 	.profile-grid{grid-template-columns:1fr}
 	.account-card{padding:22px 18px}
@@ -595,7 +601,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
 /* ---------- Мелкий телефон: ≤400 ---------- */
 @media (max-width:400px){
-	.container{padding:0 14px}
+	.container{padding-left:14px;padding-right:14px}
 	.brand__img{width:116px;height:auto}
 	.btn--login{padding:0 12px;font-size:14px;margin-right:8px}
 	.mjr-search--hero .mjr-search__submit{padding:0 18px}
