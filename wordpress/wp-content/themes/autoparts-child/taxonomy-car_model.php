@@ -93,17 +93,17 @@ $cat     = ( $cat_key && isset( $categories[ $cat_key ] ) ) ? $categories[ $cat_
 			<?php foreach ( $categories as $key => $c ) :
 				$cat_link = esc_url( add_query_arg( 'cat', $key, $model_url ) ); ?>
 				<div class="cat-card">
-					<a class="cat-card__head" href="<?php echo $cat_link; ?>">
-						<span class="cat-card__ic"><?php echo mjr_cat_icon( $key, 46 ); ?></span>
-						<span class="cat-card__title"><?php echo esc_html( mb_strtoupper( $c['name'], 'UTF-8' ) ); ?></span>
-					</a>
-					<ul class="cat-card__list">
-						<?php foreach ( $c['subs'] as $sub ) :
-							$sub_link = add_query_arg( array( 'post_type' => 'product', 's' => $sub, 'af_model' => $model_slug, 'af_cat' => $key ), home_url( '/' ) );
-							?>
-							<li><a href="<?php echo esc_url( $sub_link ); ?>"><?php echo esc_html( $sub ); ?></a></li>
-						<?php endforeach; ?>
-					</ul>
+					<span class="cat-card__ic"><?php echo mjr_cat_icon( $key, 94 ); ?></span>
+					<div class="cat-card__body">
+						<a class="cat-card__title" href="<?php echo $cat_link; ?>"><?php echo esc_html( mb_strtoupper( $c['name'], 'UTF-8' ) ); ?></a>
+						<ul class="cat-card__list">
+							<?php foreach ( $c['subs'] as $sub ) :
+								$sub_link = add_query_arg( array( 'post_type' => 'product', 's' => $sub, 'af_model' => $model_slug, 'af_cat' => $key ), home_url( '/' ) );
+								?>
+								<li><a href="<?php echo esc_url( $sub_link ); ?>"><?php echo esc_html( $sub ); ?></a></li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
 				</div>
 			<?php endforeach; ?>
 		</div>

@@ -39,12 +39,12 @@ defined( 'ABSPATH' ) || exit;
 				<button type="button" class="btn btn--login af-open-auth" data-tab="login">Вход</button>
 			<?php endif; ?>
 
-			<a class="btn btn--cart" href="<?php echo esc_url( function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ) ); ?>" aria-label="Корзина">
+			<?php $mjr_cart_count = ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart->get_cart_contents_count() : 0; ?>
+			<a class="btn btn--cart<?php echo $mjr_cart_count ? '' : ' is-empty'; ?>" href="<?php echo esc_url( function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ) ); ?>" aria-label="Корзина">
 				<?php echo mjr_icon( 'bag', 20 ); ?>
 				<span class="cart-count-frag"><?php
-					$count = ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart->get_cart_contents_count() : 0;
-					if ( $count ) {
-						echo '<span class="cart-count">' . (int) $count . '</span>';
+					if ( $mjr_cart_count ) {
+						echo '<span class="cart-count">' . (int) $mjr_cart_count . '</span>';
 					}
 				?></span>
 			</a>

@@ -66,6 +66,9 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .btn--login:hover{background:var(--green-700)}
 .btn--cart{background:var(--dark);color:#fff;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;position:relative}
 .btn--cart:hover{background:#2c2e35}
+/* Пустая корзина: неактивный вид — серый фон + чёрная иконка */
+.btn--cart.is-empty{background:#ECECEF;color:#16181D}
+.btn--cart.is-empty:hover{background:#E2E2E7}
 .cart-count{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:999px;display:grid;place-items:center;padding:0 4px;animation:afBadgePop .3s ease}
 .cart-count-frag{display:contents}
 @keyframes afBadgePop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
@@ -165,13 +168,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
 /* ---------- Страница модели: категории запчастей ---------- */
 .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:36px}
-.cat-card{background:#F5F5F7;border-radius:24px;padding:24px 26px}
-.cat-card__head{display:flex;align-items:center;gap:14px;margin-bottom:16px;color:#16181D}
-.cat-card__ic{color:#3A3D44;display:inline-flex;flex-shrink:0}
-.cat-card__title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:17px;text-transform:uppercase}
-.cat-card__head:hover .cat-card__title{color:var(--red)}
-.cat-card__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.cat-card__list a{color:#6B7078;font-size:14px;line-height:1.35}
+.cat-card{background:#F5F5F7;border-radius:24px;padding:24px 26px;display:flex;gap:18px;align-items:flex-start}
+.cat-card__ic{flex-shrink:0;width:94px;height:94px;display:inline-flex;align-items:center;justify-content:center;color:#3A3D44}
+.cat-card__ic img,.cat-card__ic svg{width:94px;height:94px;object-fit:contain}
+.cat-card__body{flex:1;min-width:0}
+.cat-card__title{display:block;font-family:'Montserrat',sans-serif;font-weight:800;font-size:17px;text-transform:uppercase;color:#16181D;margin:0 0 14px}
+.cat-card__title:hover{color:var(--red)}
+.cat-card__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.cat-card__list a{color:#363636;font-size:16px;line-height:1.35}
 .cat-card__list a:hover{color:var(--red)}
 
 /* ---------- Страница категории: подкатегории ---------- */

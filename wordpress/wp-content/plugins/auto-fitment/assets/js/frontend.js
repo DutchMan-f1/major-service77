@@ -201,6 +201,7 @@
 	$( document.body ).on( 'added_to_cart', function ( e, fragments, cart_hash, $button ) {
 		var cart = document.querySelector( '.btn--cart' );
 		if ( cart ) {
+			cart.classList.remove( 'is-empty' ); // корзина больше не пустая
 			cart.classList.remove( 'af-cart-pulse' );
 			void cart.offsetWidth;
 			cart.classList.add( 'af-cart-pulse' );
