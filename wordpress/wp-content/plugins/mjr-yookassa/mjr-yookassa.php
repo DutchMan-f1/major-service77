@@ -54,16 +54,22 @@ add_action(
 			}
 		);
 
-		// На оформлении оставляем единственный способ оплаты — картой через ЮKassa.
-		// Прочие шлюзы (перевод на карту, наложенный платёж и т.п.) скрываем.
-		// Если ЮKassa вдруг недоступна — список не трогаем (чтобы оплата не пропала совсем).
+		// На оформлении оплата должна быть только картой через ЮKassa.
+		// - Всегда убираем «Перевод на карту» (bacs) и чеки (cheque).
+		// - Если ЮKassa настроена и доступна — оставляем ТОЛЬКО её (и убираем заглушку cod).
+		// - Пока ЮKassa не настроена — оставляем cod как единственный вариант,
+		//   чтобы оформление не осталось совсем без способа оплаты.
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			function ( $gateways ) {
-				if ( is_admin() || ! is_array( $gateways ) || ! isset( $gateways['mjr_yookassa'] ) ) {
+				if ( is_admin() || ! is_array( $gateways ) ) {
 					return $gateways;
 				}
-				return array( 'mjr_yookassa' => $gateways['mjr_yookassa'] );
+				unset( $gateways['bacs'], $gateways['cheque'] );
+				if ( isset( $gateways['mjr_yookassa'] ) ) {
+					return array( 'mjr_yookassa' => $gateways['mjr_yookassa'] );
+				}
+				return $gateways;
 			}
 		);
 	},
