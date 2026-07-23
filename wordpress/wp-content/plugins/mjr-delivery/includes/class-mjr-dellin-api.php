@@ -79,14 +79,32 @@ class MJR_Dellin_API {
 	 * @return string|WP_Error KLADR-код или ошибка
 	 */
 	public function city_code( $query ) {
-		$r = $this->request( '/v2/kladr.json', array( 'q' => $query, 'limit' => 1 ) );
+		$r = $this->request( '/v1/public/kladr.json', array( 'q' => $query, 'limit' => 1 ) );
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
-		if ( ! empty( $r['cities'][0]['code'] ) ) {
-			return $r['cities'][0]['code'];
+		// Ответ — массив городов; у первого поле code (25-значный KLADR).
+		if ( ! empty( $r[0]['code'] ) ) {
+			return $r[0]['code'];
 		}
 		return new WP_Error( 'dl_city', 'Город не найден: ' . $query );
+	}
+
+	/** Список терминалов Деловых Линий (для выбора пункта выдачи). */
+	public function terminals() {
+		return $this->request( '/v1/public/terminals.json', array() );
+	}
+
+	/** Авторизация по логину/паролю ЛК → sessionID (нужен для создания заявок). */
+	public function auth() {
+		if ( '' === $this->login || '' === $this->password ) {
+			return new WP_Error( 'dl_no_login', 'Не заданы логин/пароль ЛК Деловых Линий.' );
+		}
+		$r = $this->request( '/v3/auth/login.json', array( 'login' => $this->login, 'password' => $this->password ) );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		return $r['data']['sessionID'] ?? new WP_Error( 'dl_auth', 'Не удалось авторизоваться в Деловых Линиях.' );
 	}
 
 	/**
@@ -98,11 +116,15 @@ class MJR_Dellin_API {
 	 * @param float  $volume_m3  общий объём, м³
 	 * @return array|WP_Error нормализованный результат {price, days} или ошибка
 	 */
-	public function calculate( $from_kladr, $to_kladr, $weight_kg, $volume_m3 ) {
+	public function calculate( $from_terminal_id, $to_kladr, $weight_kg, $volume_m3, $produce_date = '' ) {
+		if ( '' === $produce_date ) {
+			$produce_date = gmdate( 'Y-m-d', time() + 2 * DAY_IN_SECONDS );
+		}
 		$body = array(
 			'delivery' => array(
 				'deliveryType' => array( 'type' => 'auto' ),
-				'derival'      => array( 'variant' => 'terminal', 'city' => $from_kladr ),
+				// Отправитель — конкретный терминал ДЛ (город недостаточен); получатель — город (KLADR).
+				'derival'      => array( 'produceDate' => $produce_date, 'variant' => 'terminal', 'terminalID' => (int) $from_terminal_id ),
 				'arrival'      => array( 'variant' => 'terminal', 'city' => $to_kladr ),
 			),
 			'cargo'    => array(
