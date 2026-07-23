@@ -121,10 +121,17 @@ class MJR_Delivery_Points {
 			$live = true;
 		}
 
-		// Фолбэк: демо-точки, если реальных нет и демо включён.
+		// Если перевозчик уже настроен (есть ключи) — показываем только реальные точки,
+		// без демо: пусто → честное сообщение «нет ПВЗ в этом городе».
 		if ( empty( $points ) ) {
 			$s = MJR_Delivery::settings();
-			if ( 'yes' === $s['demo'] ) {
+			$real_configured = ( 'dellin' === $carrier && '' !== $s['dellin_appkey'] )
+				|| ( 'cdek' === $carrier && '' !== $s['cdek_account'] );
+			if ( $real_configured ) {
+				wp_send_json_error( array(
+					'message' => 'В городе «' . $city . '» нет пунктов выдачи «' . $carriers[ $carrier ]['label'] . '». Выберите доставку до адреса или другой перевозчик.',
+				) );
+			} elseif ( 'yes' === $s['demo'] ) {
 				$points = self::demo( $carrier, $city );
 			} else {
 				wp_send_json_error( array( 'message' => 'Пункты не найдены. Проверьте API-доступы перевозчика в настройках.' ) );

@@ -112,12 +112,17 @@ class MJR_Dellin_API {
 			$all = isset( $r['city'] ) && is_array( $r['city'] ) ? $r['city'] : array();
 			set_transient( 'mjr_dellin_terminals', $all, DAY_IN_SECONDS );
 		}
-		$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( (string) $city_name ) ) : strtolower( trim( (string) $city_name ) );
+		// Нормализация: нижний регистр + убираем пробелы/дефисы, чтобы «Ростов на дону»
+		// совпадал с «Ростов-на-Дону».
+		$norm   = function ( $s ) {
+			$s = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( (string) $s ) ) : strtolower( trim( (string) $s ) );
+			return preg_replace( '/[\s\-]+/u', '', $s );
+		};
+		$needle = $norm( $city_name );
 		$out    = array();
 		foreach ( $all as $city ) {
 			$name = (string) ( $city['name'] ?? '' );
-			$hay  = function_exists( 'mb_strtolower' ) ? mb_strtolower( $name ) : strtolower( $name );
-			if ( '' !== $needle && false === strpos( $hay, $needle ) ) {
+			if ( '' !== $needle && false === strpos( $norm( $name ), $needle ) ) {
 				continue;
 			}
 			$terms = $city['terminals']['terminal'] ?? ( $city['terminals'] ?? array() );
