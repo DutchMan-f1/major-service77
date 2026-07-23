@@ -21,6 +21,10 @@ RUN { \
         echo 'log_errors=On'; \
     } > /usr/local/etc/php/conf.d/wp.ini
 
+# PHP-FPM по умолчанию очищает окружение — разрешаем видеть переменные Railway
+# (нужно для DB_DIR: путь к базе на постоянном диске).
+RUN echo 'clear_env = no' >> /usr/local/etc/php-fpm.d/www.conf
+
 # Шаблон конфига nginx (порт подставится из $PORT при старте).
 COPY nginx-wp.conf.template /etc/nginx/wp.conf.template
 
@@ -31,4 +35,4 @@ RUN chown -R www-data:www-data /var/www/html
 # Railway передаёт порт в $PORT. Подставляем его в конфиг nginx,
 # запускаем PHP-FPM в фоне и nginx на переднем плане.
 # nginx-конфиг с портом, PHP-FPM в фоне, «крон» синхронизации baz-on каждые 10 мин, nginx на переднем плане.
-CMD ["sh", "-c", "if [ -n \"$DB_DIR\" ]; then mkdir -p \"$DB_DIR\"; if [ ! -f \"$DB_DIR/.ht.sqlite\" ]; then cp /var/www/html/wp-content/database/.ht.sqlite \"$DB_DIR/.ht.sqlite\" 2>/dev/null || true; fi; chown -R www-data:www-data \"$DB_DIR\"; fi && envsubst '${PORT}' < /etc/nginx/wp.conf.template > /etc/nginx/sites-enabled/default && php-fpm -D && ( while true; do sleep 600; curl -fsS -m 300 \"http://127.0.0.1:${PORT}/?mjr_cron=1\" >/dev/null 2>&1 || true; done & ) && nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "if [ -n \"$DB_DIR\" ]; then mkdir -p \"$DB_DIR\"; if [ ! -f \"$DB_DIR/.ht.sqlite\" ] && [ -f /var/www/html/wp-content/database/.ht.sqlite ] && [ ! -L /var/www/html/wp-content/database/.ht.sqlite ]; then cp /var/www/html/wp-content/database/.ht.sqlite \"$DB_DIR/.ht.sqlite\"; fi; rm -f /var/www/html/wp-content/database/.ht.sqlite; ln -s \"$DB_DIR/.ht.sqlite\" /var/www/html/wp-content/database/.ht.sqlite; chown -R www-data:www-data \"$DB_DIR\"; chown -h www-data:www-data /var/www/html/wp-content/database/.ht.sqlite; fi && envsubst '${PORT}' < /etc/nginx/wp.conf.template > /etc/nginx/sites-enabled/default && php-fpm -D && ( while true; do sleep 600; curl -fsS -m 300 \"http://127.0.0.1:${PORT}/?mjr_cron=1\" >/dev/null 2>&1 || true; done & ) && nginx -g 'daemon off;'"]
