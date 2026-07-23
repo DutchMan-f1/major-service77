@@ -118,7 +118,12 @@ class MJR_Dellin_API {
 	 */
 	public function calculate( $from_terminal_id, $to_kladr, $weight_kg, $volume_m3, $produce_date = '' ) {
 		if ( '' === $produce_date ) {
-			$produce_date = gmdate( 'Y-m-d', time() + 2 * DAY_IN_SECONDS );
+			// Ближайший будний день с завтрашнего (терминал не принимает сб/вс).
+			$ts = time() + DAY_IN_SECONDS;
+			while ( (int) gmdate( 'N', $ts ) >= 6 ) {
+				$ts += DAY_IN_SECONDS;
+			}
+			$produce_date = gmdate( 'Y-m-d', $ts );
 		}
 		$body = array(
 			'delivery' => array(

@@ -59,6 +59,7 @@ class MJR_Delivery {
 			'dellin_appkey'    => '',
 			'dellin_login'     => '',
 			'dellin_password'  => '',
+			'dellin_terminal'  => '', // ID терминала-отправителя ДЛ (напр. 18 — Москва, Рябиновая 37)
 			// Прочие перевозчики пока скрыты (можно включить в настройках).
 			'yandex_enabled'   => 'no',
 			'yandex_token'     => '',
@@ -333,7 +334,7 @@ class MJR_Delivery {
 				<?php
 				$rows = array(
 					'cdek'     => array( 'СДЭК', array( 'cdek_account' => 'Client ID (account)', 'cdek_secret' => 'Client Secret' ) ),
-					'dellin'   => array( 'Деловые Линии', array( 'dellin_appkey' => 'appkey (API-ключ, dev.dellin.ru)', 'dellin_login' => 'Логин ЛК (для расчёта/заявок)', 'dellin_password' => 'Пароль ЛК' ) ),
+					'dellin'   => array( 'Деловые Линии', array( 'dellin_appkey' => 'appkey (API-ключ, dev.dellin.ru)', 'dellin_login' => 'Логин ЛК — с +7, напр. +79255924002', 'dellin_password' => 'Пароль ЛК', 'dellin_terminal' => 'ID терминала-отправителя (напр. 18 — Москва)' ) ),
 					'yandex'   => array( 'Яндекс Доставка', array( 'yandex_token' => 'OAuth-токен' ) ),
 					'fivepost' => array( '5Post', array( 'fivepost_apikey' => 'API-ключ (Bearer)' ) ),
 					'pochta'   => array( 'Почта России', array( 'pochta_token' => 'Токен авторизации', 'pochta_key' => 'Ключ доступа (Basic)' ) ),
