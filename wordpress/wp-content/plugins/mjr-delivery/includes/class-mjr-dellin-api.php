@@ -95,6 +95,45 @@ class MJR_Dellin_API {
 		return $this->request( '/v1/public/terminals.json', array() );
 	}
 
+	/**
+	 * Терминалы ДЛ в конкретном городе (координаты для карты). Полный справочник
+	 * (~330 КБ) кэшируется в транзиенте на сутки, чтобы не тянуть его на каждый ввод.
+	 *
+	 * @param string $city_name город, напр. «Казань»
+	 * @return array|WP_Error список точек [id,name,address,lat,lng]
+	 */
+	public function terminals_in_city( $city_name ) {
+		$all = get_transient( 'mjr_dellin_terminals' );
+		if ( ! is_array( $all ) ) {
+			$r = $this->terminals();
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+			$all = isset( $r['city'] ) && is_array( $r['city'] ) ? $r['city'] : array();
+			set_transient( 'mjr_dellin_terminals', $all, DAY_IN_SECONDS );
+		}
+		$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( (string) $city_name ) ) : strtolower( trim( (string) $city_name ) );
+		$out    = array();
+		foreach ( $all as $city ) {
+			$name = (string) ( $city['name'] ?? '' );
+			$hay  = function_exists( 'mb_strtolower' ) ? mb_strtolower( $name ) : strtolower( $name );
+			if ( '' !== $needle && false === strpos( $hay, $needle ) ) {
+				continue;
+			}
+			$terms = $city['terminals']['terminal'] ?? ( $city['terminals'] ?? array() );
+			foreach ( $terms as $t ) {
+				$out[] = array(
+					'id'      => (string) ( $t['id'] ?? '' ),
+					'name'    => $t['name'] ?? 'Терминал ДЛ',
+					'address' => $t['address'] ?? ( $t['fullAddress'] ?? '' ),
+					'lat'     => (float) ( $t['latitude'] ?? 0 ),
+					'lng'     => (float) ( $t['longitude'] ?? 0 ),
+				);
+			}
+		}
+		return $out;
+	}
+
 	/** Авторизация по логину/паролю ЛК → sessionID (нужен для создания заявок). */
 	public function auth() {
 		if ( '' === $this->login || '' === $this->password ) {
@@ -116,7 +155,7 @@ class MJR_Dellin_API {
 	 * @param float  $volume_m3  общий объём, м³
 	 * @return array|WP_Error нормализованный результат {price, days} или ошибка
 	 */
-	public function calculate( $from_terminal_id, $to_kladr, $weight_kg, $volume_m3, $produce_date = '' ) {
+	public function calculate( $from_terminal_id, $to_kladr, $weight_kg, $volume_m3, $produce_date = '', $arrival_variant = 'terminal', $arrival_addr = '' ) {
 		if ( '' === $produce_date ) {
 			// Ближайший будний день с завтрашнего (терминал не принимает сб/вс).
 			$ts = time() + DAY_IN_SECONDS;
@@ -125,15 +164,26 @@ class MJR_Dellin_API {
 			}
 			$produce_date = gmdate( 'Y-m-d', $ts );
 		}
+		$side = round( max( 0.1, pow( max( 0.001, (float) $volume_m3 ), 1 / 3 ) ), 2 );
+		// Прибытие: 'terminal' — самовывоз с терминала ДЛ в городе клиента;
+		// 'address' — курьер до двери (нужна полная строка адреса: город, улица, дом).
+		$arrival = ( 'address' === $arrival_variant )
+			? array( 'variant' => 'address', 'address' => array( 'search' => (string) $arrival_addr ) )
+			: array( 'variant' => 'terminal', 'city' => $to_kladr );
 		$body = array(
 			'delivery' => array(
 				'deliveryType' => array( 'type' => 'auto' ),
 				// Отправитель — конкретный терминал ДЛ (город недостаточен); получатель — город (KLADR).
 				'derival'      => array( 'produceDate' => $produce_date, 'variant' => 'terminal', 'terminalID' => (int) $from_terminal_id ),
-				'arrival'      => array( 'variant' => 'terminal', 'city' => $to_kladr ),
+				'arrival'      => $arrival,
 			),
 			'cargo'    => array(
+				// Калькулятор ДЛ требует габариты места, не только объём.
+				// Выводим сторону условного куба из общего объёма.
 				'quantity'    => 1,
+				'length'      => $side,
+				'width'       => $side,
+				'height'      => $side,
 				'totalWeight' => (float) $weight_kg,
 				'totalVolume' => max( 0.01, (float) $volume_m3 ),
 			),

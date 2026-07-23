@@ -14,6 +14,7 @@
 	var ymState = { loading: false, ready: false };
 	var loaded  = {};   // carrier -> true, если пункты уже загружены
 	var maps    = {};   // carrier -> { map, coll }
+	var addrFromPoint = false; // адрес в billing_address_1 подставлен выбором пункта, а не введён вручную
 
 	/* ---------- helpers ---------- */
 	function currentCarrier() {
@@ -70,6 +71,66 @@
 		if (!card) { return; }
 		card.classList.add('is-open');
 		loadPoints(carrier);
+		loadCost(carrier);
+	}
+
+	/* ---------- расчёт стоимости (Деловые Линии) ---------- */
+	function costBox(carrier) {
+		var card = section.querySelector('.dlv-card[data-carrier="' + carrier + '"]');
+		if (!card) { return null; }
+		var inner = card.querySelector('.dlv-panel-inner');
+		if (!inner) { return null; }
+		var box = card.querySelector('.dlv-cost');
+		if (!box) {
+			box = document.createElement('div');
+			box.className = 'dlv-cost';
+			inner.insertBefore(box, inner.firstChild);
+		}
+		return box;
+	}
+
+	function loadCost(carrier) {
+		var box = costBox(carrier);
+		if (!box) { return; }
+		var city = cityValue();
+		if (!city) {
+			box.innerHTML = '<span class="dlv-cost__hint">Укажите город — рассчитаем стоимость доставки.</span>';
+			return;
+		}
+		box.innerHTML = '<span class="dlv-cost__hint">Расчёт стоимости…</span>';
+
+		// Улицу/дом для курьерского расчёта берём только если адрес введён вручную,
+		// а не подставлен выбором пункта выдачи.
+		var addrEl = document.getElementById('billing_address_1');
+		var addr = (addrEl && addrEl.value && !addrFromPoint) ? addrEl.value.trim() : '';
+
+		var body = new URLSearchParams();
+		body.append('action', 'mjr_delivery_cost');
+		body.append('nonce', cfg.nonce || '');
+		body.append('carrier', carrier);
+		body.append('city', city);
+		body.append('addr', addr);
+
+		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body })
+			.then(function (r) { return r.json(); })
+			.then(function (res) {
+				if (!res || !res.success) { box.innerHTML = ''; return; }
+				var p = (res.data && res.data.prices) || {};
+				var rows = '';
+				if (p.terminal != null) {
+					rows += '<span class="dlv-cost__row"><span>До терминала в вашем городе</span><b>' + p.terminal + ' ₽</b></span>';
+				}
+				if (p.address != null) {
+					rows += '<span class="dlv-cost__row"><span>Курьером до адреса</span><b>' + p.address + ' ₽</b></span>';
+				}
+				if (!rows) {
+					box.innerHTML = (res.data && res.data.note)
+						? '<span class="dlv-cost__hint">' + esc(res.data.note) + '</span>' : '';
+					return;
+				}
+				box.innerHTML = '<span class="dlv-cost__title">Стоимость доставки в «' + esc(res.data.city || city) + '»</span>' + rows;
+			})
+			.catch(function () { box.innerHTML = ''; });
 	}
 
 	radios.forEach(function (r) {
@@ -149,7 +210,7 @@
 
 		// Кладём адрес пункта в поле WooCommerce, чтобы прошла валидация и заказ знал точку.
 		var addrField = document.getElementById('billing_address_1');
-		if (addrField) { addrField.value = pointAddr.value; }
+		if (addrField) { addrField.value = pointAddr.value; addrFromPoint = true; }
 		var cityField = document.getElementById('billing_city');
 		if (cityField && !cityField.value && p.address) {
 			var mCity = p.address.match(/г\.?\s*([А-ЯЁ][а-яё-]+)/);
@@ -231,8 +292,22 @@
 			clearTimeout(deb);
 			deb = setTimeout(function () {
 				loaded = {};
-				if (currentMode() === 'pickup') { loadPoints(currentCarrier(), true); }
+				if (currentMode() === 'pickup') {
+					loadPoints(currentCarrier(), true);
+					loadCost(currentCarrier());
+				}
 			}, 700);
+		});
+	}
+
+	/* ---------- пересчёт курьерской цены при ручном вводе адреса ---------- */
+	var addrEl2 = document.getElementById('billing_address_1');
+	if (addrEl2) {
+		var debA;
+		addrEl2.addEventListener('input', function () {
+			addrFromPoint = false;
+			clearTimeout(debA);
+			debA = setTimeout(function () { loadCost(currentCarrier()); }, 700);
 		});
 	}
 

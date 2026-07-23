@@ -60,6 +60,8 @@ class MJR_Delivery {
 			'dellin_login'     => '',
 			'dellin_password'  => '',
 			'dellin_terminal'  => '', // ID терминала-отправителя ДЛ (напр. 18 — Москва, Рябиновая 37)
+			'dellin_item_w'    => '2',    // средний вес одной позиции, кг (baz-on вес не передаёт)
+			'dellin_item_v'    => '0.01', // средний объём одной позиции, м³
 			// Прочие перевозчики пока скрыты (можно включить в настройках).
 			'yandex_enabled'   => 'no',
 			'yandex_token'     => '',
@@ -334,7 +336,7 @@ class MJR_Delivery {
 				<?php
 				$rows = array(
 					'cdek'     => array( 'СДЭК', array( 'cdek_account' => 'Client ID (account)', 'cdek_secret' => 'Client Secret' ) ),
-					'dellin'   => array( 'Деловые Линии', array( 'dellin_appkey' => 'appkey (API-ключ, dev.dellin.ru)', 'dellin_login' => 'Логин ЛК — с +7, напр. +79255924002', 'dellin_password' => 'Пароль ЛК', 'dellin_terminal' => 'ID терминала-отправителя (напр. 18 — Москва)' ) ),
+					'dellin'   => array( 'Деловые Линии', array( 'dellin_appkey' => 'appkey (API-ключ, dev.dellin.ru)', 'dellin_login' => 'Логин ЛК — с +7, напр. +79255924002', 'dellin_password' => 'Пароль ЛК', 'dellin_terminal' => 'ID терминала-отправителя (напр. 18 — Москва)', 'dellin_item_w' => 'Средний вес позиции, кг (по умолч. 2)', 'dellin_item_v' => 'Средний объём позиции, м³ (по умолч. 0.01)' ) ),
 					'yandex'   => array( 'Яндекс Доставка', array( 'yandex_token' => 'OAuth-токен' ) ),
 					'fivepost' => array( '5Post', array( 'fivepost_apikey' => 'API-ключ (Bearer)' ) ),
 					'pochta'   => array( 'Почта России', array( 'pochta_token' => 'Токен авторизации', 'pochta_key' => 'Ключ доступа (Basic)' ) ),

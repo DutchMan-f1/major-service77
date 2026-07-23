@@ -18,6 +18,67 @@ class MJR_Delivery_Points {
 	public static function init() {
 		add_action( 'wp_ajax_mjr_delivery_points', array( __CLASS__, 'ajax' ) );
 		add_action( 'wp_ajax_nopriv_mjr_delivery_points', array( __CLASS__, 'ajax' ) );
+		add_action( 'wp_ajax_mjr_delivery_cost', array( __CLASS__, 'ajax_cost' ) );
+		add_action( 'wp_ajax_nopriv_mjr_delivery_cost', array( __CLASS__, 'ajax_cost' ) );
+	}
+
+	/* =========================================================
+	 *  Расчёт стоимости доставки (пока — Деловые Линии)
+	 * ======================================================= */
+	public static function ajax_cost() {
+		check_ajax_referer( 'mjr_delivery', 'nonce' );
+
+		$carrier = isset( $_POST['carrier'] ) ? sanitize_text_field( wp_unslash( $_POST['carrier'] ) ) : '';
+		$city    = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
+		$city    = $city ? $city : 'Казань';
+		$addr    = isset( $_POST['addr'] ) ? sanitize_text_field( wp_unslash( $_POST['addr'] ) ) : '';
+
+		// Расчёт цены сейчас реализован для Деловых Линий; остальные — пока без цены.
+		if ( 'dellin' !== $carrier ) {
+			wp_send_json_success( array( 'prices' => array() ) );
+		}
+
+		$s = MJR_Delivery::settings();
+		if ( '' === $s['dellin_appkey'] || '' === $s['dellin_terminal'] ) {
+			wp_send_json_success( array( 'prices' => array(), 'note' => 'Не задан appkey или терминал-отправитель ДЛ.' ) );
+		}
+
+		// Вес/объём: baz-on их не передаёт → берём средние из настроек × число позиций.
+		$count = ( function_exists( 'WC' ) && WC()->cart ) ? (int) WC()->cart->get_cart_contents_count() : 1;
+		$count = max( 1, $count );
+		$weight = max( 0.5, $count * (float) $s['dellin_item_w'] );
+		$volume = max( 0.01, $count * (float) $s['dellin_item_v'] );
+
+		$search = $addr ? ( $city . ', ' . $addr ) : '';
+		$ckey   = 'mjr_dl_cost_' . md5( $city . '|' . $search . '|' . $s['dellin_terminal'] . '|' . $weight . '|' . $volume );
+		$cached = get_transient( $ckey );
+		if ( is_array( $cached ) ) {
+			wp_send_json_success( array( 'prices' => $cached, 'city' => $city, 'cached' => true ) );
+		}
+
+		$api   = new MJR_Dellin_API( $s['dellin_appkey'], $s['dellin_login'], $s['dellin_password'] );
+		$kladr = $api->city_code( $city );
+		if ( is_wp_error( $kladr ) ) {
+			wp_send_json_success( array( 'prices' => array(), 'note' => $kladr->get_error_message() ) );
+		}
+
+		$prices = array();
+		// Самовывоз до терминала — считается по городу.
+		$rt = $api->calculate( $s['dellin_terminal'], $kladr, $weight, $volume, '', 'terminal' );
+		if ( ! is_wp_error( $rt ) && isset( $rt['price'] ) && is_numeric( $rt['price'] ) ) {
+			$prices['terminal'] = (int) round( (float) $rt['price'] );
+		}
+		// Курьером до адреса — только если клиент указал улицу/дом (нужна полная строка).
+		if ( '' !== $search ) {
+			$ra = $api->calculate( $s['dellin_terminal'], $kladr, $weight, $volume, '', 'address', $search );
+			if ( ! is_wp_error( $ra ) && isset( $ra['price'] ) && is_numeric( $ra['price'] ) ) {
+				$prices['address'] = (int) round( (float) $ra['price'] );
+			}
+		}
+		if ( $prices ) {
+			set_transient( $ckey, $prices, HOUR_IN_SECONDS );
+		}
+		wp_send_json_success( array( 'prices' => $prices, 'city' => $city ) );
 	}
 
 	public static function ajax() {
@@ -38,6 +99,9 @@ class MJR_Delivery_Points {
 		switch ( $carrier ) {
 			case 'cdek':
 				$points = self::cdek( $city );
+				break;
+			case 'dellin':
+				$points = self::dellin( $city );
 				break;
 			case 'yandex':
 				$points = self::yandex( $city );
@@ -153,6 +217,19 @@ class MJR_Delivery_Points {
 		$ttl = isset( $json['expires_in'] ) ? max( 60, (int) $json['expires_in'] - 60 ) : 3000;
 		set_transient( 'mjr_cdek_token', $json['access_token'], $ttl );
 		return $json['access_token'];
+	}
+
+	/* =========================================================
+	 *  Деловые Линии — терминалы города как пункты выдачи
+	 * ======================================================= */
+	private static function dellin( $city ) {
+		$s = MJR_Delivery::settings();
+		if ( '' === $s['dellin_appkey'] ) {
+			return array();
+		}
+		$api = new MJR_Dellin_API( $s['dellin_appkey'] );
+		$pts = $api->terminals_in_city( $city );
+		return is_wp_error( $pts ) ? array() : $pts;
 	}
 
 	/* =========================================================

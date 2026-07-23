@@ -391,8 +391,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .dlv-card__logo{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:#fff;background:var(--dlv-c,#8A8F97);flex-shrink:0;letter-spacing:.3px}
 
 .dlv-card__panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .32s ease,opacity .22s ease}
-.dlv-card.is-open .dlv-card__panel{max-height:640px;opacity:1}
+.dlv-card.is-open .dlv-card__panel{max-height:820px;opacity:1}
 .dlv-panel-inner{display:grid;grid-template-columns:1fr 296px;gap:16px;padding:2px 20px 20px}
+.dlv-cost{grid-column:1/-1;background:#F5F5F7;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.dlv-cost__title{font-size:13px;font-weight:700;color:#16181D}
+.dlv-cost__hint{font-size:13px;color:#8A8F97}
+.dlv-cost__row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;color:#363636}
+.dlv-cost__row b{font-weight:800;color:#16181D;white-space:nowrap}
 .dlv-map{height:360px;border-radius:14px;overflow:hidden;background:#EAEEF0;border:1px solid var(--line)}
 .dlv-map.is-nokey{display:flex;align-items:center;justify-content:center;text-align:center}
 .dlv-map__ph{color:#8A8F97;font-size:13px;line-height:1.5;padding:20px;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:280px}
