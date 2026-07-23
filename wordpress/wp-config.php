@@ -70,6 +70,17 @@ define( 'WP_CACHE_KEY_SALT', 'jW0QEhH7631ogh&4FKnBm(T]mcU~mh{CECe,.9%7+fpkX:]N^%
  */
 $table_prefix = 'wp_';
 
+/*
+ * Путь к базе SQLite.
+ * Если задана переменная окружения DB_DIR (напр. постоянный диск Railway
+ * /data), база берётся оттуда и переживает пересборки контейнера.
+ * Если переменной нет — используется путь по умолчанию (локальная разработка).
+ */
+$mjr_db_dir = getenv( 'DB_DIR' );
+if ( $mjr_db_dir && ! defined( 'DB_DIR' ) ) {
+	define( 'DB_DIR', $mjr_db_dir );
+}
+
 
 /* Add any custom values between this line and the "stop editing" line. */
 
