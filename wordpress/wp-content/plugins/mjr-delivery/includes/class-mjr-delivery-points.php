@@ -267,7 +267,16 @@ class MJR_Delivery_Points {
 	 * Ключ отдельный от JavaScript API. Возвращает '' при любой ошибке.
 	 */
 	private static function yandex_city( $lat, $lng, $key ) {
-		$url = 'https://geocode-maps.yandex.ru/1.x/?' . http_build_query( array(
+		// Кэш по округлённым координатам (~0.01° ≈ 1 км) — бережём дневной лимит геокодера.
+		$rlat = number_format( (float) $lat, 2, '.', '' );
+		$rlng = number_format( (float) $lng, 2, '.', '' );
+		$ckey = 'mjr_geo_' . md5( $rlat . ',' . $rlng );
+		$hit  = get_transient( $ckey );
+		if ( false !== $hit ) {
+			return (string) $hit; // может быть и '' — тоже кэшируем, чтобы не долбить повторно
+		}
+
+		$url  = 'https://geocode-maps.yandex.ru/1.x/?' . http_build_query( array(
 			'apikey'  => $key,
 			'geocode' => $lng . ',' . $lat, // Яндекс ждёт долготу,широту
 			'kind'    => 'locality',
@@ -277,14 +286,14 @@ class MJR_Delivery_Points {
 		) );
 		$resp = wp_remote_get( $url, array( 'timeout' => 15 ) );
 		if ( is_wp_error( $resp ) ) {
-			return '';
+			return ''; // ошибку сети не кэшируем — попробуем в следующий раз
 		}
 		$data    = json_decode( wp_remote_retrieve_body( $resp ), true );
 		$members = $data['response']['GeoObjectCollection']['featureMember'] ?? array();
-		if ( empty( $members[0]['GeoObject']['name'] ) ) {
-			return '';
-		}
-		return (string) $members[0]['GeoObject']['name'];
+		$city    = ! empty( $members[0]['GeoObject']['name'] ) ? (string) $members[0]['GeoObject']['name'] : '';
+
+		set_transient( $ckey, $city, DAY_IN_SECONDS );
+		return $city;
 	}
 
 	/* =========================================================
