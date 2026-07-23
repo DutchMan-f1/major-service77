@@ -139,6 +139,44 @@ class MJR_Dellin_API {
 		return $out;
 	}
 
+	/**
+	 * Ближайший город по координатам (из справочника терминалов ДЛ) — чтобы
+	 * определять город при перемещении карты без геокодера Яндекса.
+	 *
+	 * @return string|WP_Error название города
+	 */
+	public function nearest_city( $lat, $lng ) {
+		$all = get_transient( 'mjr_dellin_terminals' );
+		if ( ! is_array( $all ) ) {
+			$r = $this->terminals();
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+			$all = isset( $r['city'] ) && is_array( $r['city'] ) ? $r['city'] : array();
+			set_transient( 'mjr_dellin_terminals', $all, DAY_IN_SECONDS );
+		}
+		$lat   = (float) $lat;
+		$lng   = (float) $lng;
+		$best  = '';
+		$bestD = INF;
+		foreach ( $all as $city ) {
+			$terms = $city['terminals']['terminal'] ?? ( $city['terminals'] ?? array() );
+			foreach ( $terms as $t ) {
+				$tlat = (float) ( $t['latitude'] ?? 0 );
+				$tlng = (float) ( $t['longitude'] ?? 0 );
+				if ( ! $tlat || ! $tlng ) {
+					continue;
+				}
+				$d = ( $tlat - $lat ) * ( $tlat - $lat ) + ( $tlng - $lng ) * ( $tlng - $lng );
+				if ( $d < $bestD ) {
+					$bestD = $d;
+					$best  = (string) ( $city['name'] ?? '' );
+				}
+			}
+		}
+		return '' !== $best ? $best : new WP_Error( 'dl_near', 'Город не определён по координатам.' );
+	}
+
 	/** Авторизация по логину/паролю ЛК → sessionID (нужен для создания заявок). */
 	public function auth() {
 		if ( '' === $this->login || '' === $this->password ) {

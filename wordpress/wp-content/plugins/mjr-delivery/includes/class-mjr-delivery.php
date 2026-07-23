@@ -181,6 +181,10 @@ class MJR_Delivery {
 
 						<div class="dlv-card__panel">
 							<div class="dlv-panel-inner">
+								<div class="dlv-search">
+									<input type="text" class="dlv-search__input" placeholder="Введите город — например, Ростов-на-Дону" autocomplete="off">
+									<button type="button" class="dlv-search__btn">Найти</button>
+								</div>
 								<div class="dlv-map<?php echo $has_key ? '' : ' is-nokey'; ?>" data-carrier="<?php echo esc_attr( $id ); ?>">
 									<?php if ( ! $has_key ) : ?>
 										<div class="dlv-map__ph">

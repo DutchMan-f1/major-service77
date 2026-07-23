@@ -395,6 +395,11 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .dlv-card__panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .32s ease,opacity .22s ease}
 .dlv-card.is-open .dlv-card__panel{max-height:820px;opacity:1}
 .dlv-panel-inner{display:grid;grid-template-columns:1fr 296px;gap:16px;padding:2px 20px 20px}
+.dlv-search{grid-column:1/-1;display:flex;gap:8px}
+.dlv-search__input{flex:1;min-width:0;background:#F5F5F7;border:1.5px solid transparent;border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;color:#16181D;outline:none;transition:.15s}
+.dlv-search__input:focus{background:#fff;border-color:#CBD0D6}
+.dlv-search__btn{flex-shrink:0;border:0;border-radius:12px;padding:0 20px;background:#16181D;color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+.dlv-search__btn:hover{background:#000}
 .dlv-cost{grid-column:1/-1;background:#F5F5F7;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .dlv-cost__title{font-size:13px;font-weight:700;color:#16181D}
 .dlv-cost__hint{font-size:13px;color:#8A8F97}

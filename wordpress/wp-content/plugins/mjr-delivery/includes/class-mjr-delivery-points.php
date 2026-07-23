@@ -86,7 +86,22 @@ class MJR_Delivery_Points {
 
 		$carrier = isset( $_POST['carrier'] ) ? sanitize_text_field( wp_unslash( $_POST['carrier'] ) ) : '';
 		$city    = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
-		$city    = $city ? $city : 'Казань';
+		$lat     = isset( $_POST['lat'] ) ? (float) $_POST['lat'] : 0;
+		$lng     = isset( $_POST['lng'] ) ? (float) $_POST['lng'] : 0;
+
+		// Перемещение карты: определяем город по координатам (ближайший терминал ДЛ),
+		// без геокодера Яндекса. Работает для любого перевозчика, если задан appkey ДЛ.
+		if ( $lat && $lng ) {
+			$s = MJR_Delivery::settings();
+			if ( '' !== $s['dellin_appkey'] ) {
+				$api = new MJR_Dellin_API( $s['dellin_appkey'] );
+				$nc  = $api->nearest_city( $lat, $lng );
+				if ( ! is_wp_error( $nc ) && $nc ) {
+					$city = $nc;
+				}
+			}
+		}
+		$city = $city ? $city : 'Казань';
 
 		$carriers = MJR_Delivery::carriers();
 		if ( ! isset( $carriers[ $carrier ] ) ) {

@@ -15,6 +15,7 @@
 	var loaded  = {};   // carrier -> true, если пункты уже загружены
 	var maps    = {};   // carrier -> { map, coll }
 	var addrFromPoint = false; // адрес в billing_address_1 подставлен выбором пункта, а не введён вручную
+	var coordCity = {};        // carrier -> последний определённый по карте город (чтобы не дёргать повторно)
 
 	/* ---------- helpers ---------- */
 	function currentCarrier() {
@@ -291,24 +292,51 @@
 	}
 
 	function cityFromMapCenter(carrier) {
-		if (!window.ymaps || !maps[carrier] || currentMode() !== 'pickup') { return; }
-		if (currentCarrier() !== carrier) { return; }
-		var center = maps[carrier].map.getCenter();
-		window.ymaps.geocode(center, { kind: 'locality', results: 1 }).then(function (res) {
-			var obj = res.geoObjects.get(0);
-			if (!obj) { return; }
-			var city = '';
-			try { city = (obj.getLocalities && obj.getLocalities()[0]) || ''; } catch (e) {}
-			if (!city) { city = obj.getAddressLine ? obj.getAddressLine() : ''; }
-			if (!city) { return; }
-			var cityEl = document.getElementById('billing_city');
-			var cur = cityEl && cityEl.value ? cityEl.value.trim() : '';
-			if (normCity(city) === normCity(cur)) { return; } // город не изменился — не дёргаем
-			if (cityEl) { cityEl.value = city; }
-			loaded = {};
-			loadPoints(carrier, true);
-			loadCost(carrier);
-		});
+		if (!maps[carrier] || currentMode() !== 'pickup' || currentCarrier() !== carrier) { return; }
+		var c = maps[carrier].map.getCenter(); // [lat, lng]
+		loadPointsByCoords(carrier, c[0], c[1]);
+	}
+
+	// Подгрузка пунктов по координатам центра карты: сервер определяет город
+	// по ближайшему терминалу ДЛ (без геокодера Яндекса).
+	function loadPointsByCoords(carrier, lat, lng) {
+		var listEl = section.querySelector('.dlv-points[data-carrier="' + carrier + '"]');
+		if (!listEl) { return; }
+		var body = new URLSearchParams();
+		body.append('action', 'mjr_delivery_points');
+		body.append('nonce', cfg.nonce || '');
+		body.append('carrier', carrier);
+		body.append('lat', lat);
+		body.append('lng', lng);
+		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body })
+			.then(function (r) { return r.json(); })
+			.then(function (res) {
+				if (!res || !res.success) { return; }
+				var city = res.data.city || '';
+				if (city && coordCity[carrier] === city) { return; } // этот город уже показан
+				coordCity[carrier] = city;
+				var cityEl = document.getElementById('billing_city');
+				if (city && cityEl) { cityEl.value = city; }
+				loaded[carrier] = true;
+				renderPoints(carrier, res.data.points || []);
+				loadCost(carrier);
+			})
+			.catch(function () {});
+	}
+
+	// Поиск города вручную (поле над картой).
+	function doSearch(card) {
+		if (!card) { return; }
+		var carrier = card.getAttribute('data-carrier');
+		var inp = card.querySelector('.dlv-search__input');
+		var city = inp && inp.value ? inp.value.trim() : '';
+		if (!city) { return; }
+		var cityEl = document.getElementById('billing_city');
+		if (cityEl) { cityEl.value = city; }
+		coordCity[carrier] = city;
+		loaded = {};
+		loadPoints(carrier, true);
+		loadCost(carrier);
 	}
 
 	function esc(s) {
@@ -343,6 +371,18 @@
 			debA = setTimeout(function () { loadCost(currentCarrier()); }, 700);
 		});
 	}
+
+	/* ---------- поиск города над картой ---------- */
+	section.addEventListener('click', function (e) {
+		var btn = e.target.closest ? e.target.closest('.dlv-search__btn') : null;
+		if (btn) { doSearch(btn.closest('.dlv-card')); }
+	});
+	section.addEventListener('keydown', function (e) {
+		if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('dlv-search__input')) {
+			e.preventDefault();
+			doSearch(e.target.closest('.dlv-card'));
+		}
+	});
 
 	/* ---------- старт ---------- */
 	applyMode();
