@@ -53,6 +53,19 @@ add_action(
 				return $gateways;
 			}
 		);
+
+		// На оформлении оставляем единственный способ оплаты — картой через ЮKassa.
+		// Прочие шлюзы (перевод на карту, наложенный платёж и т.п.) скрываем.
+		// Если ЮKassa вдруг недоступна — список не трогаем (чтобы оплата не пропала совсем).
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function ( $gateways ) {
+				if ( is_admin() || ! is_array( $gateways ) || ! isset( $gateways['mjr_yookassa'] ) ) {
+					return $gateways;
+				}
+				return array( 'mjr_yookassa' => $gateways['mjr_yookassa'] );
+			}
+		);
 	},
 	11
 );
