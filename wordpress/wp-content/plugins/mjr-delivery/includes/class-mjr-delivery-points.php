@@ -89,16 +89,24 @@ class MJR_Delivery_Points {
 		$lat     = isset( $_POST['lat'] ) ? (float) $_POST['lat'] : 0;
 		$lng     = isset( $_POST['lng'] ) ? (float) $_POST['lng'] : 0;
 
-		// Перемещение карты: определяем город по координатам (ближайший терминал ДЛ),
-		// без геокодера Яндекса. Работает для любого перевозчика, если задан appkey ДЛ.
+		// Перемещение карты: определяем город по координатам центра.
+		// 1) Точный город через геокодер Яндекса (если задан ключ);
+		// 2) иначе — ближайший терминал Деловых Линий (нужен appkey ДЛ).
 		if ( $lat && $lng ) {
-			$s = MJR_Delivery::settings();
-			if ( '' !== $s['dellin_appkey'] ) {
+			$s        = MJR_Delivery::settings();
+			$resolved = '';
+			if ( '' !== $s['ymaps_geocoder_key'] ) {
+				$resolved = self::yandex_city( $lat, $lng, $s['ymaps_geocoder_key'] );
+			}
+			if ( '' === $resolved && '' !== $s['dellin_appkey'] ) {
 				$api = new MJR_Dellin_API( $s['dellin_appkey'] );
 				$nc  = $api->nearest_city( $lat, $lng );
 				if ( ! is_wp_error( $nc ) && $nc ) {
-					$city = $nc;
+					$resolved = $nc;
 				}
+			}
+			if ( '' !== $resolved ) {
+				$city = $resolved;
 			}
 		}
 		$city = $city ? $city : 'Казань';
@@ -252,6 +260,31 @@ class MJR_Delivery_Points {
 		$api = new MJR_Dellin_API( $s['dellin_appkey'] );
 		$pts = $api->terminals_in_city( $city );
 		return is_wp_error( $pts ) ? array() : $pts;
+	}
+
+	/**
+	 * Обратный геокодинг через HTTP «API Геокодера» Яндекса: координаты → город.
+	 * Ключ отдельный от JavaScript API. Возвращает '' при любой ошибке.
+	 */
+	private static function yandex_city( $lat, $lng, $key ) {
+		$url = 'https://geocode-maps.yandex.ru/1.x/?' . http_build_query( array(
+			'apikey'  => $key,
+			'geocode' => $lng . ',' . $lat, // Яндекс ждёт долготу,широту
+			'kind'    => 'locality',
+			'format'  => 'json',
+			'results' => 1,
+			'lang'    => 'ru_RU',
+		) );
+		$resp = wp_remote_get( $url, array( 'timeout' => 15 ) );
+		if ( is_wp_error( $resp ) ) {
+			return '';
+		}
+		$data    = json_decode( wp_remote_retrieve_body( $resp ), true );
+		$members = $data['response']['GeoObjectCollection']['featureMember'] ?? array();
+		if ( empty( $members[0]['GeoObject']['name'] ) ) {
+			return '';
+		}
+		return (string) $members[0]['GeoObject']['name'];
 	}
 
 	/* =========================================================

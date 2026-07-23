@@ -50,7 +50,8 @@ class MJR_Delivery {
 
 	public static function settings() {
 		$defaults = array(
-			'ymaps_key'        => '',
+			'ymaps_key'          => '',
+			'ymaps_geocoder_key' => '', // ключ «API Геокодера» (координаты → город/адрес)
 			'demo'             => 'yes',
 			'cdek_enabled'     => 'yes',
 			'cdek_account'     => '',
@@ -347,7 +348,14 @@ class MJR_Delivery {
 						<th><label for="f_ymaps_key">API-ключ JavaScript</label></th>
 						<td>
 							<input type="text" id="f_ymaps_key" name="f_ymaps_key" value="<?php echo $f( 'ymaps_key' ); ?>" class="regular-text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-							<p class="description">Кабинет разработчика Яндекс.Карт → JavaScript API и HTTP Геокодер. Без него карта не отрисуется (список пунктов будет работать).</p>
+							<p class="description">Ключ «JavaScript API» — рисует карту. Без него карта не отрисуется (список пунктов будет работать).</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="f_ymaps_geocoder_key">API-ключ Геокодера</label></th>
+						<td>
+							<input type="text" id="f_ymaps_geocoder_key" name="f_ymaps_geocoder_key" value="<?php echo $f( 'ymaps_geocoder_key' ); ?>" class="regular-text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+							<p class="description">Ключ «API Геокодера» (отдельный от JavaScript API). Определяет точный город при перемещении карты. Без него город определяется по терминалам Деловых Линий.</p>
 						</td>
 					</tr>
 					<tr>
