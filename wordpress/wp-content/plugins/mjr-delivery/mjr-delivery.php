@@ -34,6 +34,7 @@ add_action(
 		}
 		require_once __DIR__ . '/includes/class-mjr-delivery.php';
 		require_once __DIR__ . '/includes/class-mjr-delivery-points.php';
+		require_once __DIR__ . '/includes/class-mjr-dellin-api.php';
 		MJR_Delivery::init();
 		MJR_Delivery_Points::init();
 	},

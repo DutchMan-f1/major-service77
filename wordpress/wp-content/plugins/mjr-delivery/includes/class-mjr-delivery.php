@@ -21,6 +21,12 @@ class MJR_Delivery {
 				'color' => '#159A4E',
 				'short' => 'СДЭК',
 			),
+			'dellin'   => array(
+				'label' => 'Деловые Линии',
+				'desc'  => 'Терминалы и адресная доставка по всей России',
+				'color' => '#0B5FB0',
+				'short' => 'ДЛ',
+			),
 			'yandex'   => array(
 				'label' => 'Яндекс Доставка',
 				'desc'  => 'Пункты выдачи и курьер по городу, быстрая доставка',
@@ -49,11 +55,16 @@ class MJR_Delivery {
 			'cdek_enabled'     => 'yes',
 			'cdek_account'     => '',
 			'cdek_secret'      => '',
-			'yandex_enabled'   => 'yes',
+			'dellin_enabled'   => 'yes',
+			'dellin_appkey'    => '',
+			'dellin_login'     => '',
+			'dellin_password'  => '',
+			// Прочие перевозчики пока скрыты (можно включить в настройках).
+			'yandex_enabled'   => 'no',
 			'yandex_token'     => '',
-			'fivepost_enabled' => 'yes',
+			'fivepost_enabled' => 'no',
 			'fivepost_apikey'  => '',
-			'pochta_enabled'   => 'yes',
+			'pochta_enabled'   => 'no',
 			'pochta_token'     => '',
 			'pochta_key'       => '',
 		);
@@ -282,7 +293,7 @@ class MJR_Delivery {
 		$s   = self::settings();
 		$new = array();
 		foreach ( $s as $key => $default ) {
-			if ( in_array( $key, array( 'demo', 'cdek_enabled', 'yandex_enabled', 'fivepost_enabled', 'pochta_enabled' ), true ) ) {
+			if ( in_array( $key, array( 'demo', 'cdek_enabled', 'dellin_enabled', 'yandex_enabled', 'fivepost_enabled', 'pochta_enabled' ), true ) ) {
 				$new[ $key ] = isset( $_POST[ 'f_' . $key ] ) ? 'yes' : 'no';
 			} else {
 				$new[ $key ] = isset( $_POST[ 'f_' . $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'f_' . $key ] ) ) : '';
@@ -322,6 +333,7 @@ class MJR_Delivery {
 				<?php
 				$rows = array(
 					'cdek'     => array( 'СДЭК', array( 'cdek_account' => 'Client ID (account)', 'cdek_secret' => 'Client Secret' ) ),
+					'dellin'   => array( 'Деловые Линии', array( 'dellin_appkey' => 'appkey (API-ключ, dev.dellin.ru)', 'dellin_login' => 'Логин ЛК (для расчёта/заявок)', 'dellin_password' => 'Пароль ЛК' ) ),
 					'yandex'   => array( 'Яндекс Доставка', array( 'yandex_token' => 'OAuth-токен' ) ),
 					'fivepost' => array( '5Post', array( 'fivepost_apikey' => 'API-ключ (Bearer)' ) ),
 					'pochta'   => array( 'Почта России', array( 'pochta_token' => 'Токен авторизации', 'pochta_key' => 'Ключ доступа (Basic)' ) ),
