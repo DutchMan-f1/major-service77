@@ -400,6 +400,7 @@ class AF_Frontend {
 							<input class="af-input" type="password" name="password" placeholder="Пароль" autocomplete="new-password">
 							<input class="af-input" type="password" name="password2" placeholder="Повторите пароль" autocomplete="new-password">
 						</div>
+						<div class="af-pass-hint" hidden></div>
 
 						<label class="af-agree">
 							<input type="checkbox" name="agree" value="1">

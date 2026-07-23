@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MJR_DELIVERY_VER', '1.0.1' );
+define( 'MJR_DELIVERY_VER', '1.0.2' );
 define( 'MJR_DELIVERY_FILE', __FILE__ );
 
 add_action(

@@ -121,6 +121,22 @@
 		var $msg = $form.find( '.af-msg' ).prop( 'hidden', true ).removeClass( 'is-error is-ok' );
 		var $btn = $form.find( 'button[type="submit"]' ).prop( 'disabled', true );
 
+		// Проверка паролей до отправки (регистрация).
+		if ( type === 'register' ) {
+			var rp = $form.find( 'input[name="password"]' ).val() || '';
+			var rp2 = $form.find( 'input[name="password2"]' ).val() || '';
+			if ( rp.length < 6 ) {
+				$msg.text( 'Пароль должен быть не короче 6 символов.' ).prop( 'hidden', false ).addClass( 'is-error' );
+				$btn.prop( 'disabled', false );
+				return;
+			}
+			if ( rp !== rp2 ) {
+				$msg.text( 'Пароли не совпадают.' ).prop( 'hidden', false ).addClass( 'is-error' );
+				$btn.prop( 'disabled', false );
+				return;
+			}
+		}
+
 		var data = {};
 		$form.serializeArray().forEach( function ( f ) { data[ f.name ] = f.value; } );
 		data.action = 'af_' + type;
@@ -141,6 +157,38 @@
 		} ).always( function () {
 			$btn.prop( 'disabled', false );
 		} );
+	} );
+
+	/* ================= Пароль: показать/скрыть + подсказки ================= */
+
+	// Кнопка-глаз у каждого поля пароля (login/register/recover).
+	$( '.af-form input[type="password"]' ).each( function () {
+		var $inp = $( this );
+		if ( $inp.closest( '.af-pass' ).length ) { return; }
+		var $wrap = $( '<span class="af-pass"></span>' );
+		$inp.before( $wrap ).appendTo( $wrap );
+		$wrap.append( '<button type="button" class="af-pass-eye" aria-label="Показать пароль" tabindex="-1"></button>' );
+	} );
+
+	$( document ).on( 'click', '.af-pass-eye', function () {
+		var $inp = $( this ).siblings( 'input' );
+		var reveal = $inp.attr( 'type' ) === 'password';
+		$inp.attr( 'type', reveal ? 'text' : 'password' );
+		$( this ).toggleClass( 'is-on', reveal ).attr( 'aria-label', reveal ? 'Скрыть пароль' : 'Показать пароль' );
+	} );
+
+	// Живая подсказка о длине и совпадении паролей (регистрация).
+	$( document ).on( 'input', '.af-form[data-form="register"] input[name="password"], .af-form[data-form="register"] input[name="password2"]', function () {
+		var $form = $( this ).closest( '.af-form' );
+		var p = $form.find( 'input[name="password"]' ).val() || '';
+		var p2 = $form.find( 'input[name="password2"]' ).val() || '';
+		var $hint = $form.find( '.af-pass-hint' );
+		var msg = '', cls = '';
+		if ( p && p.length < 6 ) { msg = 'Пароль должен быть не короче 6 символов.'; cls = 'is-error'; }
+		else if ( p2 && p !== p2 ) { msg = 'Пароли не совпадают.'; cls = 'is-error'; }
+		else if ( p && p2 && p === p2 ) { msg = 'Пароли совпадают.'; cls = 'is-ok'; }
+		if ( msg ) { $hint.text( msg ).removeClass( 'is-error is-ok' ).addClass( cls ).prop( 'hidden', false ); }
+		else { $hint.prop( 'hidden', true ).text( '' ); }
 	} );
 
 	/* ================= Анимация и состояние «в корзину» ================= */

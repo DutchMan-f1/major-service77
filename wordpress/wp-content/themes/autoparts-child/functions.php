@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'MJR_VER' ) ) {
-	define( 'MJR_VER', '0.7.1' );
+	define( 'MJR_VER', '0.7.2' );
 }
 
 /**

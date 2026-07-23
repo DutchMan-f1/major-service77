@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AF_VERSION', '0.3.3' );
+define( 'AF_VERSION', '0.3.4' );
 define( 'AF_PLUGIN_FILE', __FILE__ );
 define( 'AF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

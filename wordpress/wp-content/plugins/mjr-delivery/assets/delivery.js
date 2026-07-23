@@ -255,6 +255,7 @@
 				var coll = new window.ymaps.GeoObjectCollection();
 				map.geoObjects.add(coll);
 				maps[carrier] = { map: map, coll: coll };
+				bindMapMove(carrier, map);
 			}
 			var m = maps[carrier];
 			m.coll.removeAll();
@@ -275,6 +276,38 @@
 
 			// карта в скрытой панели инициализируется с нулевым размером — чиним
 			setTimeout(function () { m.map.container.fitToViewport(); }, 60);
+		});
+	}
+
+	/* ---------- перемещение карты → определить город → подгрузить пункты ---------- */
+	function normCity(s) { return String(s || '').toLowerCase().replace(/[\s\-]+/g, ''); }
+
+	function bindMapMove(carrier, map) {
+		var deb;
+		map.events.add('boundschange', function () {
+			clearTimeout(deb);
+			deb = setTimeout(function () { cityFromMapCenter(carrier); }, 850);
+		});
+	}
+
+	function cityFromMapCenter(carrier) {
+		if (!window.ymaps || !maps[carrier] || currentMode() !== 'pickup') { return; }
+		if (currentCarrier() !== carrier) { return; }
+		var center = maps[carrier].map.getCenter();
+		window.ymaps.geocode(center, { kind: 'locality', results: 1 }).then(function (res) {
+			var obj = res.geoObjects.get(0);
+			if (!obj) { return; }
+			var city = '';
+			try { city = (obj.getLocalities && obj.getLocalities()[0]) || ''; } catch (e) {}
+			if (!city) { city = obj.getAddressLine ? obj.getAddressLine() : ''; }
+			if (!city) { return; }
+			var cityEl = document.getElementById('billing_city');
+			var cur = cityEl && cityEl.value ? cityEl.value.trim() : '';
+			if (normCity(city) === normCity(cur)) { return; } // город не изменился — не дёргаем
+			if (cityEl) { cityEl.value = city; }
+			loaded = {};
+			loadPoints(carrier, true);
+			loadCost(carrier);
 		});
 	}
 

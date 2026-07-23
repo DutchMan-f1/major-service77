@@ -75,6 +75,20 @@ class MJR_Delivery {
 		return wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
 	}
 
+	/**
+	 * URL логотипа перевозчика, если файл лежит в assets/logos/{id}.(svg|png|webp|jpg).
+	 * Иначе '' → покажем буквенный значок. Официальный логотип достаточно положить в папку.
+	 */
+	public static function carrier_logo_url( $id ) {
+		$dir = plugin_dir_path( MJR_DELIVERY_FILE ) . 'assets/logos/';
+		foreach ( array( 'svg', 'png', 'webp', 'jpg' ) as $ext ) {
+			if ( file_exists( $dir . $id . '.' . $ext ) ) {
+				return plugins_url( 'assets/logos/' . $id . '.' . $ext, MJR_DELIVERY_FILE );
+			}
+		}
+		return '';
+	}
+
 	/** Включённые перевозчики. */
 	public static function enabled_carriers() {
 		$s   = self::settings();
@@ -157,7 +171,12 @@ class MJR_Delivery {
 								<span class="dlv-card__title"><?php echo esc_html( $c['label'] ); ?></span>
 								<span class="dlv-card__desc"><?php echo esc_html( $c['desc'] ); ?></span>
 							</span>
-							<span class="dlv-card__logo" style="--dlv-c:<?php echo esc_attr( $c['color'] ); ?>"><?php echo esc_html( $c['short'] ); ?></span>
+							<?php $logo = self::carrier_logo_url( $id ); ?>
+							<span class="dlv-card__logo<?php echo $logo ? ' dlv-card__logo--img' : ''; ?>" style="--dlv-c:<?php echo esc_attr( $c['color'] ); ?>">
+								<?php if ( $logo ) : ?>
+									<img src="<?php echo esc_url( $logo ); ?>" alt="<?php echo esc_attr( $c['label'] ); ?>">
+								<?php else : echo esc_html( $c['short'] ); endif; ?>
+							</span>
 						</label>
 
 						<div class="dlv-card__panel">
